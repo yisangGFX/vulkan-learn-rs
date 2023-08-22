@@ -9,23 +9,29 @@ use winit::{
     window::WindowBuilder,
 };
 use vulkano::{
-    instance::{Instance, InstanceCreateInfo},
+    instance::{Instance, InstanceCreateInfo, },
     swapchain::{Surface},
     VulkanLibrary, 
 };
 
+const VALIDATION_LAYERS: &[&str] =  &["VK_LAYER_LUNARG_standard_validation"];
+
+#[allow(unused)]
 struct  HelloTriangleApplication {
     event_loop: Option<EventLoop<()>>,
     instance: Option<Arc<Instance>>,
+    debug_callback: Option<DebugCallBack>,
 }
 
 impl HelloTriangleApplication {
     pub fn initialize() -> Self {
         let event_loop = Self::init_window();
         let instance = Self::create_instance();
+        
         Self {
             event_loop: Some(event_loop),
             instance: Some(instance),
+            debug_callback: todo!(),
         }
     }
 
