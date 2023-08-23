@@ -14,13 +14,10 @@ use vulkano::{
     VulkanLibrary, 
 };
 
-const VALIDATION_LAYERS: &[&str] =  &["VK_LAYER_LUNARG_standard_validation"];
-
 #[allow(unused)]
 struct  HelloTriangleApplication {
     event_loop: Option<EventLoop<()>>,
     instance: Option<Arc<Instance>>,
-    debug_callback: Option<DebugCallBack>,
 }
 
 impl HelloTriangleApplication {
@@ -31,7 +28,6 @@ impl HelloTriangleApplication {
         Self {
             event_loop: Some(event_loop),
             instance: Some(instance),
-            debug_callback: todo!(),
         }
     }
 
