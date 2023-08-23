@@ -3,14 +3,17 @@ extern crate winit;
 
 use std::sync::Arc;
 
+use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
+    window::{WindowBuilder, Window},
 };
 use vulkano::{
     instance::{Instance, InstanceCreateInfo, },
-    swapchain::{Surface},
+    swapchain::{
+        acquire_next_image, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
+    },
     VulkanLibrary, 
 };
 
@@ -18,25 +21,22 @@ use vulkano::{
 struct  HelloTriangleApplication {
     event_loop: Option<EventLoop<()>>,
     instance: Option<Arc<Instance>>,
+    surface: Arc<Surface>,
 }
 
 impl HelloTriangleApplication {
     pub fn initialize() -> Self {
-        let event_loop = Self::init_window();
+        let event_loop = EventLoop::new();
+        let window = WindowBuilder::new().with_title("Vulkan-learn-rs").build(&event_loop).unwrap();
         let instance = Self::create_instance();
+        let surface = WindowBuilder::new().build_vk_surface(&event_loop, instance.clone()).unwrap();
+        
         
         Self {
             event_loop: Some(event_loop),
             instance: Some(instance),
+            surface: surface,
         }
-    }
-
-    fn init_window() -> EventLoop<()> {
-        let event_loop = EventLoop::new();
-        let _window = WindowBuilder::new()
-            .with_title("Vulkan learn rs")
-            .build(&event_loop).unwrap();
-        event_loop
     }
 
     fn create_instance() -> Arc<Instance> {
@@ -47,6 +47,7 @@ impl HelloTriangleApplication {
             library,
             InstanceCreateInfo {
                 enabled_extensions: required_extensions,
+                enumerate_portability: true,
                 ..Default::default()
             },
         )

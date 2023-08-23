@@ -7,7 +7,7 @@
 
 # Vulkan
 Here is the steps to create a simple vulkan application:
-1. base code
+1. base code(winit, VulkanLibrary, ...)
 2. create an instance
 3. Validation layers
 4. Physical devices and queue families
