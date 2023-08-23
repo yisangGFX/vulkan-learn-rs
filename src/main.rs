@@ -10,18 +10,32 @@ use winit::{
     window::{WindowBuilder, Window},
 };
 use vulkano::{
-    instance::{Instance, InstanceCreateInfo, },
+    instance::{Instance, InstanceCreateInfo},
     swapchain::{
         acquire_next_image, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
     },
-    VulkanLibrary, 
+    VulkanLibrary, device::DeviceExtensions, 
 };
 
+struct QueueFamilyIndices {
+    graphics_family: i32,
+}
+
+impl QueueFamilyIndices {
+    fn new() -> Self {
+        Self { graphics_family: -1 }
+    }
+
+    fn is_complete(&self) -> bool {
+        self.graphics_family >= 0
+    }
+}
 #[allow(unused)]
 struct  HelloTriangleApplication {
     event_loop: Option<EventLoop<()>>,
     instance: Option<Arc<Instance>>,
     surface: Arc<Surface>,
+    physical_device_index: usize,   // can't store PhysicalDevice directly (lifetime issues)
 }
 
 impl HelloTriangleApplication {
@@ -31,11 +45,13 @@ impl HelloTriangleApplication {
         let instance = Self::create_instance();
         let surface = WindowBuilder::new().build_vk_surface(&event_loop, instance.clone()).unwrap();
         
+        let physical_device_index = Self::pick_physical_device(&instance);
         
         Self {
             event_loop: Some(event_loop),
             instance: Some(instance),
             surface: surface,
+            physical_device_index: physical_device_index,
         }
     }
 
@@ -53,6 +69,13 @@ impl HelloTriangleApplication {
         )
         .unwrap();
         instance
+    }
+
+    fn pick_physical_device(instance: &Arc<Instance>) -> usize {
+        let mut device_extensions = DeviceExtensions {
+            khr_swapchain: true,
+            ..DeviceExtensions::empty()
+        };
     }
 
     fn main_loop(&mut self) {
