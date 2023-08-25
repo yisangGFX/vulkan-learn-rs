@@ -3,7 +3,7 @@ use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder, Window},
+    window::{WindowBuilder, Window, self},
 };
 use vulkano::{
     instance::{Instance, InstanceCreateInfo},
@@ -264,6 +264,49 @@ fn main() {
 
     // store the submission of the previous frame here.
     let mut previous_frame_end = Some(sync::now(device.clone()).boxed());
+
+    // main-loop
+    event_loop.run(move |event, _, control_flow| {
+        match event {
+            Event::WindowEvent { 
+                event: WindowEvent::CloseRequested, .. 
+            } => {
+                *control_flow = ControlFlow::Exit;
+            }
+            Event::WindowEvent { 
+                event: WindowEvent::Resized(_),
+                ..
+             } => {
+                    *control_flow = ControlFlow::Exit;
+                }
+            Event::RedrawEventsCleared => {
+                // render loop
+                let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
+                let dimensions = window.inner_size();
+                if dimensions == 0 || dimensions.height == 0 {
+                    return;
+                }
+                
+                // build command buffer
+                let mut builder = AutoCommandBufferBuilder::primary(&command_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit)
+                .unwrap();
+
+                builder
+                    .begin_render_pass(
+                        RenderPassBeginInfo { 
+                            clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
+                            ..RenderPassBeginInfo::framebuffer(
+                                framebuffers[image_index as usize].clone(),
+                            )
+                            },
+                            SubpassContents::Inline,
+                    )
+                    .unwrap()
+                    .set_viewport(0, [viewport.clone()])
+            }
+            _ => (),
+        }
+    });
 
 }
 
