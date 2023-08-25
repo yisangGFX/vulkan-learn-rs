@@ -8,9 +8,8 @@
 # Vulkan
 Here is the steps to create a simple vulkan application:
 1. base code(winit, VulkanLibrary, ...)
-2. create an instance
-3. Validation layers
-4. Physical devices and queue families
+2. create an instance(and a surface,if in windows)
+3. Physical devices and queue families
 
 # Others
 - A lot of information in Vulkan is passed through structs instead of function parameters and we'll have to fill in one more struct to provide sufficient information for creating an instance.
