@@ -1,15 +1,17 @@
-因为网上大部分都是英文资料，所以第一次弄双语笔记（英文是抄的或者简单的表达，中文是自己想的比较复杂懒得转换成英语了，我的英语啥时候能信手拈来啊）
 # Environments
 
 - vulkano = "0.33.0" :a safe wrapper around the Vulkan API with some convenience functionality
 
 - winit = "0.28.6" ：an alternative window managment library written in pure Rust
 
-# Vulkan
+# Vulkan Steps
 Here is the steps to create a simple vulkan application:
-1. base code(winit, VulkanLibrary, ...)
-2. create an instance(and a surface,if in windows)
-3. Physical devices and queue families
+1. base code(winit, lib, ...)
+2. create VulkanLibrary
+3. create an instance
+4. Surface
+5. Physical devices and queue families
+6. Logic device and queues
 
 # Others
 - A lot of information in Vulkan is passed through structs instead of function parameters and we'll have to fill in one more struct to provide sufficient information for creating an instance.

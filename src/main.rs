@@ -14,7 +14,11 @@ use vulkano::{
     swapchain::{
         acquire_next_image, Surface, Swapchain, SwapchainCreateInfo, SwapchainPresentInfo,
     },
-    VulkanLibrary, device::{DeviceExtensions, physical::{self, PhysicalDeviceType}, QueueFlags}, library, 
+    VulkanLibrary, 
+    device::{
+        physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, QueueCreateInfo,
+        QueueFlags,
+    },
 };
 
 fn main() {
@@ -43,7 +47,7 @@ fn main() {
         ..DeviceExtensions::empty()
     };
 
-    let (physical_device, que_family_index) = instance
+    let (physical_device, queue_family_index) = instance
     .enumerate_physical_devices()
     .unwrap()
     .filter(|p| {
@@ -77,5 +81,22 @@ fn main() {
         "Using device: {} (type: {:?})",
         physical_device.properties().device_name,
         physical_device.properties().device_type,
+    );
+
+    // #5. Logical device and queues
+    let (device, mut queues) = Device::new(
+        physical_device,
+        DeviceCreateInfo{
+            enabled_extensions:device_extensions,
+            queue_create_infos: vec![QueueCreateInfo {
+                queue_family_index,
+                ..Default::default()
+            }],
+            ..Default::default()
+        },
     )
+    .unwrap();
+
+    let queue = queues.next().unwrap();
+
 }
