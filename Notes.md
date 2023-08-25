@@ -26,3 +26,13 @@ instance provide some useful information to the driver in order to optimize our 
 
 ## Physical devices
  A PhysicalDevice represents a Vulkan-capable device that is available on the system, such as a graphics card, a software implementation, etc.
+
+## Render Pass
+An object that describes where the output of the graphics pipeline will go. It describes the layout of the images where the colors, depth and/or stencil information will be written.
+1. load
+2. store
+3. format
+4. samples
+
+# Question
+1. how to impel run-time shader complier checker?
