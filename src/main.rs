@@ -18,7 +18,7 @@ use vulkano::{
     device::{
         physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, QueueCreateInfo,
         QueueFlags,
-    },
+    }, image::{self, ImageUsage},
 };
 
 fn main() {
@@ -39,6 +39,7 @@ fn main() {
 
     // #3. Surface
     let event_loop = EventLoop::new();
+    let window = Arc::new(WindowBuilder::new().build(&event_loop).unwrap());
     let surface = WindowBuilder::new().build_vk_surface(&event_loop, instance.clone()).unwrap();
         
     // #4. Enumerate the physical devices
@@ -98,5 +99,39 @@ fn main() {
     .unwrap();
 
     let queue = queues.next().unwrap();
+
+   // #6. Swapchain
+   let (mut swapchain, images) = {
+        let surface_capabilities = device
+        .physical_device()
+        .surface_capabilities(&surface, Default::default())
+        .unwrap();
+
+        let image_format = Some(
+            device
+            .physical_device()
+            .surface_formats(&surface, Default::default())
+            .unwrap()[0]
+            .0,
+        );
+
+        Swapchain::new(
+            device.clone(),
+            surface,
+            SwapchainCreateInfo { 
+                min_image_count: surface_capabilities.min_image_count.max(2),
+                image_format,
+                image_extent: window.inner_size().into(),
+                image_usage: ImageUsage::COLOR_ATTACHMENT,
+                composite_alpha: surface_capabilities
+                    .supported_composite_alpha
+                    .into_iter()
+                    .next()
+                    .unwrap(),
+                ..Default::default()
+            },
+        )
+        .unwrap()
+   };
 
 }
