@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, future};
 use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
@@ -32,7 +32,7 @@ use vulkano::{
         allocator::StandardCommandBufferAllocator, AutoCommandBufferBuilder, CommandBufferUsage,
         RenderPassBeginInfo, SubpassContents, self,
     },
-    sync::{self, GpuFuture},
+    sync::{self, GpuFuture, FlushError},
 };
 
 fn main() {
@@ -131,7 +131,7 @@ fn main() {
 
         Swapchain::new(
             device.clone(),
-            surface,
+            surface.clone(),
             SwapchainCreateInfo { 
                 min_image_count: surface_capabilities.min_image_count.max(2),
                 image_format,
@@ -254,7 +254,7 @@ fn main() {
     };
 
     // #7.5 FBO
-    let mut frambuffers = window_size_dependent_setup(&images, render_pass.clone(), &mut viewport);
+    let mut framebuffers = window_size_dependent_setup(&images, render_pass.clone(), &mut viewport);
 
     // allocating command buffer
     let command_buffer_allocator = 
@@ -277,16 +277,59 @@ fn main() {
                 event: WindowEvent::Resized(_),
                 ..
              } => {
-                    *control_flow = ControlFlow::Exit;
+                recreate_swapchain = true;
                 }
             Event::RedrawEventsCleared => {
-                // render loop
+                // when minimizing the application,do not draw
                 let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
                 let dimensions = window.inner_size();
-                if dimensions == 0 || dimensions.height == 0 {
+                if dimensions.width == 0 || dimensions.height == 0 {
                     return;
                 }
                 
+                // cleanup the resources that no longer needed.
+                previous_frame_end.as_mut().unwrap().cleanup_finished();
+
+                // recreate things dependent on the window sieze
+                // include swapchain, framebuffers, viewport(dynamic now), etc.
+                if recreate_swapchain {
+                    let (new_swapchain, new_images) = 
+                        match swapchain.recreate(SwapchainCreateInfo {  
+                            image_extent: dimensions.into(),
+                            ..swapchain.create_info()
+                        }) {
+                            Ok(r) => r,
+                            Err(SwapchainCreationError::ImageExtentNotSupported { .. }) => return,
+                            Err(e) => panic!("failed to create swapchain!: {e}"),
+                        };
+                    swapchain = new_swapchain;
+
+                    framebuffers = window_size_dependent_setup(
+                        &new_images,
+                        render_pass.clone(),
+                        &mut viewport,
+                    );
+
+                    recreate_swapchain = false;
+                }
+                
+
+                // ask image from the swapchain
+                let (image_index, suboptimal, acquire_future) = 
+                match acquire_next_image(swapchain.clone(), None) {
+                    Ok(r) => r,
+                    Err(AcquireError::OutOfDate) => {
+                        recreate_swapchain = true;
+                        return;
+                    }
+                    Err(e) => panic!("faild to acquire image!: {e}")
+                };
+
+                // in some case,acquire_next_image is suboptimal,we need recreate swapchain
+                if suboptimal {
+                    recreate_swapchain = true;
+                }
+
                 // build command buffer
                 let mut builder = AutoCommandBufferBuilder::primary(&command_buffer_allocator, queue.queue_family_index(), CommandBufferUsage::OneTimeSubmit)
                 .unwrap();
@@ -298,11 +341,43 @@ fn main() {
                             ..RenderPassBeginInfo::framebuffer(
                                 framebuffers[image_index as usize].clone(),
                             )
-                            },
-                            SubpassContents::Inline,
+                        },
+                         SubpassContents::Inline,
                     )
                     .unwrap()
                     .set_viewport(0, [viewport.clone()])
+                    .bind_pipeline_graphics(pipeline.clone())
+                    .draw(vertex_buffer.len() as u32, 1, 0, 0)
+                    .unwrap()
+                    .end_render_pass()
+                    .unwrap();
+
+                let command_buffer = builder.build().unwrap();
+
+                let future = previous_frame_end
+                    .take()
+                    .unwrap()
+                    .join(acquire_future)
+                    .then_execute(queue.clone(), command_buffer)
+                    .unwrap()
+                    .then_swapchain_present(
+                        queue.clone(),
+                        SwapchainPresentInfo::swapchain_image_index(swapchain.clone(), image_index),
+                    )
+                    .then_signal_fence_and_flush();
+
+                    match future {
+                        Ok(future) => {
+                            previous_frame_end = Some(future.boxed());
+                        }
+                        Err(FlushError::OutOfDate) => {
+                            recreate_swapchain = true;
+                            previous_frame_end = Some(sync::now(device.clone()).boxed());
+                        }
+                        Err(e) => {
+                            panic!("failed to flush future: {e}");
+                        }
+                }
             }
             _ => (),
         }
