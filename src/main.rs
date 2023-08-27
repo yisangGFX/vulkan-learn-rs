@@ -53,7 +53,6 @@ fn main() {
 
     // #3. Surface
     let event_loop = EventLoop::new();
-    let window = Arc::new(WindowBuilder::new().build(&event_loop).unwrap());
     let surface = WindowBuilder::new().build_vk_surface(&event_loop, instance.clone()).unwrap();
         
     // #4. Enumerate the physical devices
@@ -128,7 +127,7 @@ fn main() {
             .unwrap()[0]
             .0,
         );
-
+        let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
         Swapchain::new(
             device.clone(),
             surface.clone(),
@@ -348,6 +347,7 @@ fn main() {
                     .unwrap()
                     .set_viewport(0, [viewport.clone()])
                     .bind_pipeline_graphics(pipeline.clone())
+                    .bind_vertex_buffers(0, vertex_buffer.clone())
                     .draw(vertex_buffer.len() as u32, 1, 0, 0)
                     .unwrap()
                     .end_render_pass()
