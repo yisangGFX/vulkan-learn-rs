@@ -242,6 +242,8 @@ fn main() {
    .vertex_input_state(Vertex::per_vertex())
    .input_assembly_state(InputAssemblyState::new())
    .vertex_shader(vs.entry_point("main").unwrap(), ())
+   .viewport_state(ViewportState::viewport_dynamic_scissor_irrelevant())
+   .fragment_shader(fs.entry_point("main").unwrap(), ())
    .build(device.clone())
    .unwrap();
 
