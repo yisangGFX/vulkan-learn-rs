@@ -3,7 +3,7 @@ use vulkano_win::VkSurfaceBuild;
 use winit::{
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder, Window, self},
+    window::{WindowBuilder, Window},
 };
 use vulkano::{
     instance::{Instance, InstanceCreateInfo},
@@ -269,16 +269,17 @@ fn main() {
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent { 
-                event: WindowEvent::CloseRequested, .. 
+                event: WindowEvent::CloseRequested, 
+                .. 
             } => {
                 *control_flow = ControlFlow::Exit;
             }
             Event::WindowEvent { 
                 event: WindowEvent::Resized(_),
                 ..
-             } => {
+            } => {
                 recreate_swapchain = true;
-                }
+            }
             Event::RedrawEventsCleared => {
                 // when minimizing the application,do not draw
                 let window = surface.object().unwrap().downcast_ref::<Window>().unwrap();
@@ -385,6 +386,7 @@ fn main() {
 
 }
 
+// initialization or update Frambuffer when window is resized.
 fn window_size_dependent_setup(
     images: &[Arc<SwapchainImage>],
     render_pass: Arc<RenderPass>,
