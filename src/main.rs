@@ -44,7 +44,6 @@ fn main() {
     let instance = Instance::new(
         library,
         InstanceCreateInfo { 
-            application_name: Some("Learn Vulkan-rs".to_string()), 
             enabled_extensions: require_extensions,
             enumerate_portability: true,
             ..Default::default()
